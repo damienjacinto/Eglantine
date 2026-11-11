@@ -278,6 +278,8 @@ add_subdirectory(hid_core)
 add_subdirectory(input_common)
 add_subdirectory(frontend_common)
 add_subdirectory(shader_recompiler)
+add_subdirectory(extension_api)
+add_subdirectory(extension_host)
 
 if(YUZU_TESTS)
     add_subdirectory(tests)

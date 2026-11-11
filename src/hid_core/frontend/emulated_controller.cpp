@@ -120,11 +120,40 @@ void EmulatedController::ReloadFromSettings() {
     }
 
     Disconnect();
-    if (player.connected) {
+    if (ApplyInputOverride() || player.connected) {
         Connect();
     }
 
     ReloadInput();
+}
+
+bool EmulatedController::ApplyInputOverride() {
+    std::optional<InputOverride> current;
+    {
+        std::scoped_lock lock{override_mutex};
+        current = input_override;
+    }
+    if (!current) {
+        return false;
+    }
+    button_params = std::move(current->buttons);
+    stick_params = std::move(current->sticks);
+    motion_params = std::move(current->motions);
+    SetNpadStyleIndex(current->style);
+    return true;
+}
+
+void EmulatedController::SetInputOverride(std::optional<InputOverride> new_override) {
+    {
+        std::scoped_lock lock{override_mutex};
+        input_override = std::move(new_override);
+    }
+    ReloadFromSettings();
+}
+
+bool EmulatedController::HasInputOverride() const {
+    std::scoped_lock lock{override_mutex};
+    return input_override.has_value();
 }
 
 void EmulatedController::ReloadColorsFromSettings() {
@@ -633,6 +662,11 @@ bool EmulatedController::IsConfiguring() const {
 
 void EmulatedController::SaveCurrentConfig() {
     const auto player_index = Service::HID::NpadIdTypeToIndex(npad_id_type);
+    if (HasInputOverride()) {
+        LOG_WARNING(Service_HID, "Not saving player {} while an input override is active",
+                    player_index + 1);
+        return;
+    }
     auto& player = Settings::values.players.GetValue()[player_index];
     player.connected = is_connected;
     player.controller_type = MapNPadToSettingsType(npad_type);

@@ -189,6 +189,14 @@ struct ControllerUpdateCallback {
     bool is_npad_service;
 };
 
+/// A mapping applied on top of the stored configuration without being saved to it.
+struct InputOverride {
+    ButtonParams buttons{};
+    StickParams sticks{};
+    ControllerMotionParams motions{};
+    NpadStyleIndex style{NpadStyleIndex::Fullkey};
+};
+
 class EmulatedController {
 public:
     /**
@@ -281,6 +289,16 @@ public:
 
     /// Reverts any mapped changes made that weren't saved
     void RestoreConfig();
+
+    /**
+     * Maps and connects the controller from an override instead of the stored configuration.
+     * The override survives ReloadFromSettings and is never written by SaveCurrentConfig.
+     * Passing std::nullopt removes it and reloads the stored configuration.
+     */
+    void SetInputOverride(std::optional<InputOverride> input_override);
+
+    /// Returns true if an input override is active
+    bool HasInputOverride() const;
 
     /// Returns a vector of mapped devices from the mapped button and stick parameters
     std::vector<Common::ParamPackage> GetMappedDevices() const;
@@ -651,6 +669,12 @@ private:
     ControllerMotionDevices virtual_motion_devices;
 
     std::optional<InjectedInput> Injected() const;
+
+    /// Replaces the mapped params with the override and connects it. Returns false if none.
+    bool ApplyInputOverride();
+
+    mutable std::mutex override_mutex;
+    std::optional<InputOverride> input_override;
 
     mutable std::mutex callback_mutex;
     ::Common::unordered_map<int, ControllerUpdateCallback> callback_list;

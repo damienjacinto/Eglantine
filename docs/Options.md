@@ -85,6 +85,8 @@ Also desktop-only, but apply strictly to Qt
 
 - `ENABLE_QT` (ON) Enable the Qt frontend (recommended)
 - `ENABLE_QT_TRANSLATION` (OFF) Enable translations for the Qt frontend
+- `ENABLE_EXTENSIONS` (ON) Load extensions from the extensions folder. See [Extensions](./Extensions.md)
+  - `EGLANTINE_BUILD_EXTENSIONS` (ON) Build the example extensions in `extensions/`, when that folder is present (it is not part of the repository)
 - `YUZU_USE_BUNDLED_QT` (ON for MSVC) Download bundled Qt binaries
   - Not recommended on Linux. For Windows and macOS, the provided build is statically linked.
 - `YUZU_QT_MIRROR` (string) What mirror to use for downloading the bundled Qt libraries

@@ -32,6 +32,9 @@
 #endif
 
 #include "main_window.h"
+#ifdef ENABLE_EXTENSIONS
+#include "yuzu/extensions/extension_manager.h"
+#endif
 
 #ifdef _WIN32
 #include <QScreen>
@@ -264,6 +267,13 @@ int main(int argc, char* argv[]) {
     QApplication::setStyle(QStringLiteral("windowsvista"));
 #endif
 
+#ifdef ENABLE_EXTENSIONS
+    // Extensions that integrate with other software may need to start before the windowing,
+    // graphics and input subsystems do.
+    Extensions::ExtensionManager extension_manager;
+    extension_manager.PreInitialize(GetSwitchExeDirectory(argv[0]));
+#endif
+
     QApplication app(argc, argv);
 
 #ifdef _WIN32
@@ -286,6 +296,9 @@ int main(int argc, char* argv[]) {
     setlocale(LC_ALL, "C");
 
     MainWindow main_window{has_broken_vulkan};
+#ifdef ENABLE_EXTENSIONS
+    main_window.AttachExtensions(&extension_manager);
+#endif
     // After settings have been loaded by GMainWindow, apply the filter
     main_window.show();
 

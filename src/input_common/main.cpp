@@ -8,6 +8,7 @@
 #include "common/input.h"
 #include "common/param_package.h"
 #include "input_common/drivers/camera.h"
+#include "input_common/drivers/extension_input.h"
 #include "input_common/drivers/keyboard.h"
 #include "input_common/drivers/mouse.h"
 #include "input_common/drivers/tas_input.h"
@@ -90,6 +91,7 @@ struct InputSubsystem::Impl {
 #endif
         RegisterEngine("virtual_amiibo", virtual_amiibo);
         RegisterEngine("virtual_gamepad", virtual_gamepad);
+        RegisterEngine("extension", extension_input);
 #ifdef HAVE_SDL3
         RegisterEngine("sdl", sdl);
         RegisterEngine("joycon", joycon);
@@ -124,6 +126,7 @@ struct InputSubsystem::Impl {
 #endif
         UnregisterEngine(virtual_amiibo);
         UnregisterEngine(virtual_gamepad);
+        UnregisterEngine(extension_input);
 #ifdef HAVE_SDL3
         UnregisterEngine(sdl);
         UnregisterEngine(joycon);
@@ -154,6 +157,8 @@ struct InputSubsystem::Impl {
 #endif
         auto udp_devices = udp_client->GetInputDevices();
         devices.insert(devices.end(), udp_devices.begin(), udp_devices.end());
+        auto extension_devices = extension_input->GetInputDevices();
+        devices.insert(devices.end(), extension_devices.begin(), extension_devices.end());
 #ifdef HAVE_SDL3
         auto joycon_devices = joycon->GetInputDevices();
         devices.insert(devices.end(), joycon_devices.begin(), joycon_devices.end());
@@ -188,6 +193,9 @@ struct InputSubsystem::Impl {
 #endif
         if (engine == udp_client->GetEngineName()) {
             return udp_client;
+        }
+        if (engine == extension_input->GetEngineName()) {
+            return extension_input;
         }
 #ifdef HAVE_SDL3
         if (engine == sdl->GetEngineName()) {
@@ -280,6 +288,9 @@ struct InputSubsystem::Impl {
         if (engine == virtual_gamepad->GetEngineName()) {
             return true;
         }
+        if (engine == extension_input->GetEngineName()) {
+            return true;
+        }
 #ifdef HAVE_SDL3
         if (engine == sdl->GetEngineName()) {
             return true;
@@ -301,6 +312,7 @@ struct InputSubsystem::Impl {
         gcadapter->BeginConfiguration();
 #endif
         udp_client->BeginConfiguration();
+        extension_input->BeginConfiguration();
 #ifdef HAVE_SDL3
         sdl->BeginConfiguration();
         joycon->BeginConfiguration();
@@ -317,6 +329,7 @@ struct InputSubsystem::Impl {
         gcadapter->EndConfiguration();
 #endif
         udp_client->EndConfiguration();
+        extension_input->EndConfiguration();
 #ifdef HAVE_SDL3
         sdl->EndConfiguration();
         joycon->EndConfiguration();
@@ -345,6 +358,7 @@ struct InputSubsystem::Impl {
     std::shared_ptr<Camera> camera;
     std::shared_ptr<VirtualAmiibo> virtual_amiibo;
     std::shared_ptr<VirtualGamepad> virtual_gamepad;
+    std::shared_ptr<ExtensionInput> extension_input;
 
 #ifdef ENABLE_LIBUSB
     std::shared_ptr<GCAdapter> gcadapter;
@@ -436,6 +450,14 @@ VirtualGamepad* InputSubsystem::GetVirtualGamepad() {
 
 const VirtualGamepad* InputSubsystem::GetVirtualGamepad() const {
     return impl->virtual_gamepad.get();
+}
+
+ExtensionInput* InputSubsystem::GetExtensionInput() {
+    return impl->extension_input.get();
+}
+
+const ExtensionInput* InputSubsystem::GetExtensionInput() const {
+    return impl->extension_input.get();
 }
 
 std::vector<Common::ParamPackage> InputSubsystem::GetInputDevices() const {

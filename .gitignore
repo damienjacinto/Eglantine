@@ -6,6 +6,10 @@
 
 # Build directory
 /[Bb]uild*/
+
+# Example extensions, kept out of the repository
+/extensions/
+
 doc-build/
 out/
 AppDir/

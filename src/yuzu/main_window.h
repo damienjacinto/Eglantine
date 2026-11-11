@@ -132,6 +132,10 @@ namespace Ui {
 class MainWindow;
 }
 
+namespace Extensions {
+class ExtensionManager;
+}
+
 enum class EmulatedDirectoryTarget {
     NAND,
     SDMC,
@@ -179,6 +183,9 @@ public:
     void AcceptDropEvent(QDropEvent* event);
 
     std::filesystem::path GetShortcutPath(QtCommon::Game::ShortcutTarget target);
+
+    /// Adds the Extensions menu and starts the extensions. The manager must outlive the window.
+    void AttachExtensions(Extensions::ExtensionManager* manager);
 
 signals:
 
@@ -575,6 +582,8 @@ private:
 
     // Debugger panes
     ControllerDialog* controller_dialog = nullptr;
+
+    Extensions::ExtensionManager* extension_manager = nullptr;
 
     QAction* actions_recent_files[max_recent_files_item];
 

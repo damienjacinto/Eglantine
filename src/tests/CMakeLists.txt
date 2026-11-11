@@ -59,11 +59,23 @@ add_executable(tests
     video_core/shader_attributes.cpp
     video_core/indirect_reset.cpp
     input_common/calibration_configuration_job.cpp
+    input_common/extension_input.cpp
+    input_common/input_override.cpp
+    extension_host/library.cpp
+    extension_host/manifest.cpp
 )
 
 create_target_directory_groups(tests)
 
-target_link_libraries(tests PRIVATE common core input_common video_core)
+target_link_libraries(tests PRIVATE common core input_common video_core extension_host)
+
+# A minimal extension for the extension_host loader tests.
+add_library(test_extension MODULE extension_host/test_extension.c)
+target_link_libraries(test_extension PRIVATE eglantine_extension_api)
+set_target_properties(test_extension PROPERTIES PREFIX "" C_VISIBILITY_PRESET hidden)
+add_dependencies(tests test_extension)
+target_compile_definitions(tests PRIVATE
+    EGLANTINE_TEST_EXTENSION_PATH="$<TARGET_FILE:test_extension>")
 target_link_libraries(tests PRIVATE ${PLATFORM_LIBRARIES} Catch2::Catch2WithMain Threads::Threads)
 
 add_test(NAME tests COMMAND tests)

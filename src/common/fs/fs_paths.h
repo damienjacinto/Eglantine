@@ -30,6 +30,7 @@
 #define SDMC_DIR "sdmc"
 #define SHADER_DIR "shader"
 #define STREAMLINE_DIR "streamline"
+#define EXTENSIONS_DIR "extensions"
 #define TAS_DIR "tas"
 #define ICONS_DIR "icons"
 

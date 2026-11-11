@@ -23,6 +23,7 @@ This contains documentation created by developers, build instructions, guideline
   - **[Dynarmic](./dynarmic/README.md)**
   - **[HOS Kernel](./HosKernel.md)**
   - **[Settings](./Settings.md)**
+  - **[Extensions](./Extensions.md)**
 
 ## Policies
 

@@ -34,6 +34,7 @@ enum Values : int;
 namespace InputCommon {
 class Android;
 class Camera;
+class ExtensionInput;
 class Keyboard;
 class Mouse;
 class TouchScreen;
@@ -124,6 +125,12 @@ public:
 
     /// Retrieves the underlying virtual gamepad input device.
     [[nodiscard]] const VirtualGamepad* GetVirtualGamepad() const;
+
+    /// Retrieves the input engine holding the devices created by extensions.
+    [[nodiscard]] ExtensionInput* GetExtensionInput();
+
+    /// Retrieves the input engine holding the devices created by extensions.
+    [[nodiscard]] const ExtensionInput* GetExtensionInput() const;
 
     /**
      * Returns all available input devices that this Factory can create a new device with.

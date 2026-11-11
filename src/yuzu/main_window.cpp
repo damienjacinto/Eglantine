@@ -290,6 +290,11 @@ static void RemoveTitlebarFilter() {
 #include "yuzu/breakpad.h"
 #endif
 
+#ifdef ENABLE_EXTENSIONS
+#include "yuzu/extensions/extension_manager.h"
+#include "yuzu/extensions/extensions_dialog.h"
+#endif
+
 using namespace Common::Literals;
 
 #include "qt_common/discord/discord.h"
@@ -610,6 +615,16 @@ void MainWindow::AmiiboSettingsRequestExit() {
 
 void MainWindow::ControllerSelectorReconfigureControllers(
     const Core::Frontend::ControllerParameters& parameters) {
+#ifdef ENABLE_EXTENSIONS
+    if (extension_manager != nullptr) {
+        extension_manager->SuspendAssignments();
+    }
+    SCOPE_EXIT {
+        if (extension_manager != nullptr) {
+            extension_manager->ResumeAssignments();
+        }
+    };
+#endif
     controller_applet =
         new QtControllerSelectorDialog(this, parameters, input_subsystem.get(), *QtCommon::system);
     SCOPE_EXIT {
@@ -3587,6 +3602,16 @@ void MainWindow::ToggleShowGameName() {
 }
 
 void MainWindow::OnConfigure() {
+#ifdef ENABLE_EXTENSIONS
+    if (extension_manager != nullptr) {
+        extension_manager->SuspendAssignments();
+    }
+    SCOPE_EXIT {
+        if (extension_manager != nullptr) {
+            extension_manager->ResumeAssignments();
+        }
+    };
+#endif
     const auto old_theme = UISettings::values.theme;
     const bool old_discord_presence = UISettings::values.enable_discord_presence.GetValue();
     const auto old_language_index = Settings::values.language_index.GetValue();
@@ -3879,12 +3904,57 @@ void MainWindow::OnToggleGraphicsAPI() {
     UpdateAPIText();
 }
 
+void MainWindow::AttachExtensions(Extensions::ExtensionManager* manager) {
+#ifdef ENABLE_EXTENSIONS
+    extension_manager = manager;
+
+    auto* extensions_menu = new QMenu(tr("E&xtensions"), this);
+    menuBar()->insertMenu(ui->menu_Help->menuAction(), extensions_menu);
+    connect(extensions_menu->addAction(tr("&Manage Extensions...")), &QAction::triggered, this,
+            [this] {
+                Extensions::ExtensionsDialog dialog(*extension_manager, this);
+                dialog.exec();
+            });
+    extensions_menu->addSeparator();
+
+    connect(this, &MainWindow::EmulationStarting, this, [this] {
+        std::string title;
+        void(QtCommon::system->GetGameName(title));
+        extension_manager->OnEmulationStarted(QtCommon::system->GetApplicationProcessProgramID(),
+                                              title);
+    });
+    connect(this, &MainWindow::EmulationStopping, this,
+            [this] { extension_manager->OnEmulationStopping(); });
+
+    extension_manager->Initialize(Extensions::HostServices{
+        .parent = this,
+        .menus = {extensions_menu, ui->menu_File, ui->menu_Emulation, ui->menu_View,
+                  ui->menu_Multiplayer, ui->menu_Tools, ui->menu_Help},
+        .status_bar = statusBar(),
+        .input = input_subsystem.get(),
+        .system = QtCommon::system.get(),
+    });
+#else
+    (void)manager;
+#endif
+}
+
 void MainWindow::OnConfigurePerGame() {
     const u64 title_id = QtCommon::system->GetApplicationProcessProgramID();
     OpenPerGameConfiguration(title_id, current_game_path.toStdString());
 }
 
 void MainWindow::OpenPerGameConfiguration(u64 title_id, const std::string& file_name) {
+#ifdef ENABLE_EXTENSIONS
+    if (extension_manager != nullptr) {
+        extension_manager->SuspendAssignments();
+    }
+    SCOPE_EXIT {
+        if (extension_manager != nullptr) {
+            extension_manager->ResumeAssignments();
+        }
+    };
+#endif
     const auto v_file = Core::GetGameFileFromPath(QtCommon::vfs, file_name);
 
     Settings::SetConfiguringGlobal(false);
@@ -5057,6 +5127,12 @@ void MainWindow::closeEvent(QCloseEvent* event) {
         return;
     }
     LOG_INFO(Frontend, "Closing frontend after emulation cleanup");
+
+#ifdef ENABLE_EXTENSIONS
+    if (extension_manager != nullptr) {
+        extension_manager->Shutdown();
+    }
+#endif
 
     UpdateUISettings();
     game_list->SaveInterfaceLayout();

@@ -485,4 +485,16 @@ endif()
 # Remember that the linker is incredibly stupid.
 target_link_libraries(yuzu PRIVATE OpenSSL::SSL OpenSSL::Crypto SDL3::SDL3)
 
+if (ENABLE_EXTENSIONS)
+    target_sources(yuzu PRIVATE
+        extensions/extension_manager.cpp
+        extensions/extension_manager.h
+        extensions/extensions_dialog.cpp
+        extensions/extensions_dialog.h
+        extensions/host_api.cpp
+    )
+    target_link_libraries(yuzu PRIVATE extension_host)
+    target_compile_definitions(yuzu PRIVATE ENABLE_EXTENSIONS)
+endif()
+
 create_target_directory_groups(yuzu)

@@ -76,6 +76,8 @@ option(ENABLE_QT_TRANSLATION "Enable translations for the Qt frontend" OFF)
 option(ENABLE_UPDATE_CHECKER "Enable update checker (for Qt and Android)" OFF)
 cmake_dependent_option(YUZU_USE_QT_MULTIMEDIA "Use QtMultimedia for Camera"  OFF "NOT YUZU_USE_BUNDLED_QT" OFF)
 cmake_dependent_option(YUZU_USE_QT_WEB_ENGINE "Use QtWebEngine for web applet implementation" OFF "NOT YUZU_USE_BUNDLED_QT" OFF)
+cmake_dependent_option(ENABLE_EXTENSIONS "Load extensions from the extensions folder (Qt frontend)" ON "ENABLE_QT" OFF)
+cmake_dependent_option(EGLANTINE_BUILD_EXTENSIONS "Build the example extensions in extensions/" ON "ENABLE_EXTENSIONS" OFF)
 set(YUZU_QT_MIRROR "" CACHE STRING "What mirror to use for downloading the bundled Qt libraries")
 cmake_dependent_option(YUZU_USE_BUNDLED_QT "Download bundled Qt binaries" "${MSVC}" "ENABLE_QT" OFF)
 
@@ -727,6 +729,10 @@ if (MSVC AND CXX_CLANG)
 endif()
 
 add_subdirectory(src)
+
+if (EGLANTINE_BUILD_EXTENSIONS AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/extensions/CMakeLists.txt")
+    add_subdirectory(extensions)
+endif()
 
 if (ENABLE_DEBUG_TOOLS)
     add_subdirectory(tools/maxwell-disas)
